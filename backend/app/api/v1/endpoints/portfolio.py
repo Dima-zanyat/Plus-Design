@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, status
 from app.api.deps import PortfolioServiceDep
 from app.dependencies import Pagination
 from app.schemas.common import ErrorResponse, Page
-from app.schemas.portfolio import PortfolioItemRead
+from app.schemas.portfolio import PortfolioItemCreate, PortfolioItemRead
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -30,6 +30,21 @@ async def list_portfolio(
         category_slug=category,
         tag_slug=tag,
     )
+
+
+@router.post(
+    "",
+    response_model=PortfolioItemRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Создать работу портфолио",
+    responses={status.HTTP_409_CONFLICT: {"model": ErrorResponse}},
+)
+async def create_portfolio_item(
+    payload: PortfolioItemCreate,
+    service: PortfolioServiceDep,
+) -> PortfolioItemRead:
+    """Создать работу портфолио."""
+    return await service.create(payload)
 
 
 @router.get(

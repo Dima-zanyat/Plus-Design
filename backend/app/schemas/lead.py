@@ -57,6 +57,9 @@ class LeadCreate(BaseModel):
 
 class LeadStatusUpdate(BaseModel):
     status: LeadStatus
+
+
+class LeadRead(BaseModel):
     """Представление заявки в ответах API."""
 
     model_config = ConfigDict(from_attributes=True)
