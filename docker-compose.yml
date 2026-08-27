@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: plusdesign-db
+    environment:
+      POSTGRES_USER: plusdesign
+      POSTGRES_PASSWORD: plusdesign
+      POSTGRES_DB: plusdesign
+    ports:
+      - "5432:5432"
+    volumes:
+      - plusdesign-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plusdesign -d plusdesign"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: plusdesign-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://plusdesign:plusdesign@db:5432/plusdesign
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: plusdesign-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_started
+
+volumes:
+  plusdesign-pgdata:

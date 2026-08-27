@@ -27,9 +27,9 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
 
     # --- База данных ---
-    database_url: PostgresDsn = Field(
-        default="postgresql+asyncpg://plusdesign:plusdesign@localhost:5432/plusdesign",
-        description="DSN асинхронного подключения к PostgreSQL (драйвер asyncpg).",
+    database_url: str = Field(
+        default="postgresql+asyncpg://plusdesign:plusdesign@db:5432/plusdesign",
+        alias="DATABASE_URL",
     )
     db_echo: bool = False
     db_pool_size: int = 5

@@ -32,7 +32,11 @@ class LeadNotifier:
         sent = False
         if self._settings.telegram_bot_token and self._settings.telegram_chat_id:
             sent = await self._telegram(text) or sent
-        if self._settings.smtp_host and self._settings.smtp_to and self._settings.smtp_from:
+        if (
+            self._settings.smtp_host
+            and self._settings.smtp_to
+            and self._settings.smtp_from
+        ):
             sent = await self._email(text) or sent
         if not sent:
             logger.info("Заявка id=%s принята, канал уведомлений не настроен", lead.id)

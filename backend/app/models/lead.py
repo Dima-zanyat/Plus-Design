@@ -29,10 +29,14 @@ class Lead(Base, TimestampMixin):
     email: Mapped[str | None] = mapped_column(String(254), nullable=True)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[LeadStatus] = mapped_column(
-        SAEnum(LeadStatus, name="lead_status", native_enum=True),
+        SAEnum(
+            LeadStatus,
+            name="lead_status",
+            native_enum=True,
+            values_callable=lambda enum_cls: [e.value for e in enum_cls],
+        ),
         nullable=False,
         default=LeadStatus.NEW,
-        server_default=LeadStatus.NEW.value,
     )
 
     def __repr__(self) -> str:  # pragma: no cover - отладочное представление

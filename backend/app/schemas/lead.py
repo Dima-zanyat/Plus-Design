@@ -68,3 +68,14 @@ class LeadStatusUpdate(BaseModel):
     message: str | None
     status: LeadStatus
     created_at: datetime
+
+
+class LeadRead(BaseModel):
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    phone: str
+    email: str | None
+    message: str | None
