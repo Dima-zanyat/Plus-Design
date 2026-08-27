@@ -37,6 +37,7 @@ class Lead(Base, TimestampMixin):
         ),
         nullable=False,
         default=LeadStatus.NEW,
+        server_default=LeadStatus.NEW.value,
     )
 
     def __repr__(self) -> str:  # pragma: no cover - отладочное представление
