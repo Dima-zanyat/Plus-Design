@@ -29,7 +29,7 @@ class LeadNotifier:
             f"Email: {lead.email or '—'}\n"
             f"Сообщение: {lead.message or '—'}"
         )
-        sent = False
+        sent: bool = False
         if self._settings.telegram_bot_token and self._settings.telegram_chat_id:
             sent = await self._telegram(text) or sent
         if (

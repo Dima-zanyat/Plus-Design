@@ -7,7 +7,7 @@ from fastapi import APIRouter, Query, status
 from app.api.deps import PortfolioServiceDep
 from app.dependencies import Pagination
 from app.schemas.common import ErrorResponse, Page
-from app.schemas.portfolio import PortfolioItemRead
+from app.schemas.portfolio import PortfolioItemRead, PortfolioItemCreate
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
 
@@ -43,3 +43,11 @@ async def get_portfolio_item(
     service: PortfolioServiceDep,
 ) -> PortfolioItemRead:
     return await service.get_by_slug(slug, published_only=True)
+
+
+@router.post("/create")
+async def create_portfolio_item(
+    payload: PortfolioItemCreate,
+    service: PortfolioServiceDep,
+):
+    return await service.create(payload=payload)

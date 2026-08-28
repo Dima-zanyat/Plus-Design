@@ -105,7 +105,9 @@ class PortfolioService:
             size=pagination.size,
         )
 
-    async def get_by_slug(self, slug: str, *, published_only: bool = True) -> PortfolioItemRead:
+    async def get_by_slug(
+        self, slug: str, *, published_only: bool = True
+    ) -> PortfolioItemRead:
         item = await self._repository.get_by_slug(slug)
         if item is None or (published_only and not item.is_published):
             raise NotFoundError(f"Работа со slug '{slug}' не найдена")
@@ -138,12 +140,16 @@ class PortfolioService:
         assert loaded is not None
         return PortfolioItemRead.model_validate(loaded)
 
-    async def update(self, item_id: int, payload: PortfolioItemUpdate) -> PortfolioItemRead:
+    async def update(
+        self, item_id: int, payload: PortfolioItemUpdate
+    ) -> PortfolioItemRead:
         item = await self._repository.get_with_relations(item_id)
         if item is None:
             raise NotFoundError(f"Работа с id {item_id} не найдена")
         data = payload.model_dump(exclude_unset=True)
-        if "slug" in data and await self._repository.slug_exists(data["slug"], exclude_id=item_id):
+        if "slug" in data and await self._repository.slug_exists(
+            data["slug"], exclude_id=item_id
+        ):
             raise ConflictError(f"Работа со slug '{data['slug']}' уже существует")
         if "category_id" in data:
             item.category = await self._resolve_category(data.pop("category_id"))
@@ -154,7 +160,9 @@ class PortfolioService:
             for image in self._build_images(data.pop("images") or []):
                 item.images.append(image)
             if item.cover_image is None and item.images:
-                item.cover_image = sorted(item.images, key=lambda img: img.sort_order)[0].url
+                item.cover_image = sorted(item.images, key=lambda img: img.sort_order)[
+                    0
+                ].url
         for field, value in data.items():
             setattr(item, field, value)
         await self._repository.add(item)
@@ -169,15 +177,21 @@ class PortfolioService:
         await self._repository.delete(item)
 
     async def list_categories(self) -> list[NamedSlug]:
-        return [NamedSlug.model_validate(item) for item in await self._categories.list_all()]
+        return [
+            NamedSlug.model_validate(item) for item in await self._categories.list_all()
+        ]
 
     async def create_category(self, payload: NamedSlugCreate) -> NamedSlug:
         if await self._categories.slug_exists(payload.slug):
             raise ConflictError(f"Категория со slug '{payload.slug}' уже существует")
-        entity = await self._categories.add(Category(name=payload.name, slug=payload.slug))
+        entity = await self._categories.add(
+            Category(name=payload.name, slug=payload.slug)
+        )
         return NamedSlug.model_validate(entity)
 
-    async def update_category(self, category_id: int, payload: NamedSlugUpdate) -> NamedSlug:
+    async def update_category(
+        self, category_id: int, payload: NamedSlugUpdate
+    ) -> NamedSlug:
         entity = await self._categories.get(category_id)
         if entity is None:
             raise NotFoundError("Категория не найдена")
@@ -212,7 +226,9 @@ class PortfolioService:
         if entity is None:
             raise NotFoundError("Тег не найден")
         data = payload.model_dump(exclude_unset=True)
-        if "slug" in data and await self._tags.slug_exists(data["slug"], exclude_id=tag_id):
+        if "slug" in data and await self._tags.slug_exists(
+            data["slug"], exclude_id=tag_id
+        ):
             raise ConflictError(f"Тег со slug '{data['slug']}' уже существует")
         for field, value in data.items():
             setattr(entity, field, value)

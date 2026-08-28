@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, status
 
-from app.api.deps import LeadServiceDep
+from app.api.deps import LeadServiceDep, NotifierDep
 from app.schemas.common import ErrorResponse
 from app.schemas.lead import LeadCreate, LeadRead
 
@@ -22,6 +22,9 @@ router = APIRouter(prefix="/leads", tags=["leads"])
 async def create_lead(
     payload: LeadCreate,
     service: LeadServiceDep,
+    notify: NotifierDep,
 ) -> LeadRead:
     """Принять заявку: имя и телефон обязательны, email опционален."""
-    return await service.submit(payload)
+    submit_data = await service.submit(payload)
+    await notify.notify_new_lead(lead=submit_data)
+    return submit_data
