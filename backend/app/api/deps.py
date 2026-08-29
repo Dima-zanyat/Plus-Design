@@ -8,10 +8,11 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.config import Settings, get_settings
 from app.core.exceptions import UnauthorizedError
 from app.core.security import decode_subject
-from app.dependencies import DbSession
+from app.dependencies import DbSession, AppSettings
 from app.repositories.catalog_repo import CategoryRepository, TagRepository
 from app.repositories.lead_repo import LeadRepository
 from app.repositories.portfolio_repo import PortfolioRepository
+from app.services.admin_service import AdminService
 from app.services.lead_service import LeadService
 from app.services.notifier import LeadNotifier
 from app.services.portfolio_service import PortfolioService
@@ -25,6 +26,10 @@ def get_portfolio_service(session: DbSession) -> PortfolioService:
         CategoryRepository(session),
         TagRepository(session),
     )
+
+
+def get_admin_service(settings: AppSettings) -> AdminService:
+    return AdminService(settings)
 
 
 def get_lead_service(session: DbSession) -> LeadService:
@@ -49,5 +54,6 @@ def get_current_admin(
 
 PortfolioServiceDep = Annotated[PortfolioService, Depends(get_portfolio_service)]
 LeadServiceDep = Annotated[LeadService, Depends(get_lead_service)]
+AdminServiceDep = Annotated[AdminService, Depends(get_admin_service)]
 NotifierDep = Annotated[LeadNotifier, Depends(get_notifier)]
 AdminUser = Annotated[str, Depends(get_current_admin)]

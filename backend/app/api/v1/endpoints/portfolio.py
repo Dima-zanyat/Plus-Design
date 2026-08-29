@@ -2,14 +2,27 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query, status
+from fastapi import APIRouter, Query, status, Depends
 
-from app.api.deps import PortfolioServiceDep
+from app.api.deps import PortfolioServiceDep, get_current_admin
 from app.dependencies import Pagination
 from app.schemas.common import ErrorResponse, Page
-from app.schemas.portfolio import PortfolioItemRead, PortfolioItemCreate
+from app.schemas.portfolio import (
+    NamedSlug,
+    NamedSlugCreate,
+    NamedSlugUpdate,
+    PortfolioImageIn,
+    PortfolioItemCreate,
+    PortfolioItemRead,
+    PortfolioItemUpdate,
+)
 
 router = APIRouter(prefix="/portfolio", tags=["portfolio"])
+admin_router = APIRouter(
+    prefix="/portfolio",
+    tags=["admin-portfolio"],
+    dependencies=[Depends(get_current_admin)],
+)
 
 
 @router.get(
@@ -45,9 +58,52 @@ async def get_portfolio_item(
     return await service.get_by_slug(slug, published_only=True)
 
 
-@router.post("/create")
+# Создание сущностей
+
+
+@admin_router.post("/create/portfolio", response_model=PortfolioItemRead)
 async def create_portfolio_item(
     payload: PortfolioItemCreate,
     service: PortfolioServiceDep,
 ):
     return await service.create(payload=payload)
+
+
+@admin_router.post("/create/category", response_model=NamedSlug)
+async def create_category(
+    payload: NamedSlugCreate,
+    service: PortfolioServiceDep,
+) -> NamedSlug:
+    return await service.create_category(payload)
+
+
+@admin_router.post("/create/tag", response_model=NamedSlug)
+async def create_tag(
+    payload: NamedSlugCreate, service: PortfolioServiceDep
+) -> NamedSlug:
+    return await service.create_tag(payload)
+
+
+# Удаление сущностей
+
+
+@admin_router.delete(
+    "/delete/portfolio/{item_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_portfolio_item(
+    item_id: int,
+    service: PortfolioServiceDep,
+) -> None:
+    await service.delete(item_id)
+
+
+@admin_router.delete(
+    "/delete/category/{category_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_category(category_id: int, service: PortfolioServiceDep) -> None:
+    await service.delete_category(category_id)
+
+
+@admin_router.delete("/delete/tag/{tag_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_tag(tag_id: int, service: PortfolioServiceDep) -> None:
+    await service.delete_tag(tag_id)
