@@ -8,6 +8,7 @@ export type AppRoute =
   | { name: 'admin' }
   | { name: 'adminNew' }
   | { name: 'adminEdit'; id: number }
+  | { name: 'adminLeads' }
   | { name: 'notFound' }
 
 export function parsePath(pathname: string): AppRoute {
@@ -19,6 +20,7 @@ export function parsePath(pathname: string): AppRoute {
   if (path === '/admin/login') return { name: 'adminLogin' }
   if (path === '/admin') return { name: 'admin' }
   if (path === '/admin/new') return { name: 'adminNew' }
+  if (path === '/admin/leads') return { name: 'adminLeads' }
 
   const portfolioItem = path.match(/^\/portfolio\/([a-z0-9]+(?:-[a-z0-9]+)*)$/)
   if (portfolioItem) return { name: 'portfolioItem', slug: portfolioItem[1] }
@@ -49,6 +51,8 @@ export function hrefFor(route: AppRoute): string {
       return '/admin/new'
     case 'adminEdit':
       return `/admin/${route.id}`
+    case 'adminLeads':
+      return '/admin/leads'
     case 'notFound':
       return '/'
   }
@@ -59,6 +63,7 @@ export function isAdminRoute(route: AppRoute): boolean {
     route.name === 'adminLogin' ||
     route.name === 'admin' ||
     route.name === 'adminNew' ||
-    route.name === 'adminEdit'
+    route.name === 'adminEdit' ||
+    route.name === 'adminLeads'
   )
 }

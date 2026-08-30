@@ -1,4 +1,5 @@
 import type {
+  Lead,
   Page,
   PortfolioItem,
   PortfolioItemUpdate,
@@ -49,4 +50,16 @@ export function updateAdminPortfolioItem(id: number, payload: PortfolioItemUpdat
 
 export function deleteAdminPortfolioItem(id: number) {
   return apiFetch<void>(`/api/v1/admin/portfolio/${id}`, { method: 'DELETE' })
+}
+
+export function fetchAdminLeads(page = 1, size = 20) {
+  const params = new URLSearchParams({ page: String(page), size: String(size) })
+  return apiFetch<Page<Lead>>(`/api/v1/admin/leads?${params}`)
+}
+
+export function updateLeadStatus(id: number, status: Lead['status']) {
+  return apiFetch<Lead>(`/api/v1/admin/leads/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status }),
+  })
 }

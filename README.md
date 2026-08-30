@@ -29,12 +29,14 @@ Japandi в этом проекте — **только визуальный ст�
 | --- | --- |
 | FastAPI-приложение, конфиг, логирование, обработка ошибок | готово |
 | PostgreSQL + SQLAlchemy 2.0 async + Alembic | готово |
-| `GET /api/v1/portfolio` — опубликованные работы с пагинацией | готово |
+| `GET /api/v1/portfolio` — опубликованные работы, пагинация, фильтры по категории/тегу | готово |
 | `GET /api/v1/portfolio/{slug}` — одна опубликованная работа | готово |
-| Админ-CRUD портфолио под JWT (`/api/v1/admin/…`) | готово |
+| Админ-CRUD портфолио, категорий, тегов под JWT (`/api/v1/admin/…`) | готово |
+| Загрузка изображений (`/api/v1/admin/media/upload`) | готово |
 | `POST /api/v1/leads` — форма-заявка, опционально SMTP/Telegram | готово |
-| Тесты (pytest) | готово |
-| Фронтенд: витрина + `/admin` | готово |
+| Просмотр и статусы заявок в админке (`/api/v1/admin/leads`) | готово |
+| Тесты (pytest, 36 шт.) | готово |
+| Фронтенд: витрина + `/admin` (работы, заявки) | готово |
 | Production Docker (`db` + API + nginx :80) | готово |
 
 ## Стек
@@ -191,11 +193,13 @@ plusdesign/
     │   │   ├── __init__.py
     │   │   ├── common.py            # Page, PaginationParams, ErrorResponse
     │   │   ├── portfolio.py         # схемы работ портфолио
+    │   │   ├── auth.py              # LoginRequest, TokenResponse, AdminMe
+    │   │   ├── media.py             # UploadedFile
     │   │   └── lead.py              # схемы заявки, нормализация телефона
     │   │
     │   ├── api/
     │   │   ├── __init__.py
-    │   │   ├── deps.py              # сборка сервисов из репозиториев
+    │   │   ├── deps.py              # сборка сервисов из репозиториев, AdminUser
     │   │   └── v1/
     │   │       ├── __init__.py
     │   │       ├── router.py        # агрегирующий роутер для /api/v1
@@ -203,10 +207,12 @@ plusdesign/
     │   │           ├── __init__.py
     │   │           ├── health.py    # healthcheck
     │   │           ├── catalog.py   # категории и теги (чтение)
-    │   │           ├── portfolio.py # публичная витрина
+    │   │           ├── portfolio.py # публичная витрина, фильтры
     │   │           ├── leads.py     # форма-заявка
-    │   │           ├── admin.py     # login / me
-    │   │           └── admin_portfolio.py
+    │   │           ├── admin.py     # login / me / logout
+    │   │           ├── admin_portfolio.py  # CRUD работ, категорий, тегов
+    │   │           ├── admin_leads.py      # просмотр и статусы заявок
+    │   │           └── media.py     # загрузка изображений
     │   │
     │   ├── services/
     │   │   ├── __init__.py
@@ -227,11 +233,14 @@ plusdesign/
     │   ├── __init__.py
     │   ├── conftest.py              # фикстуры pytest, тестовый клиент, тестовая БД
     │   ├── test_health.py
+    │   ├── test_admin.py            # логин, CRUD портфолио/категорий/тегов
+    │   ├── test_admin_leads.py      # просмотр и статусы заявок
+    │   ├── test_media.py            # загрузка изображений
     │   ├── test_portfolio.py
     │   └── test_leads.py
     │
     ├── alembic.ini                  # конфиг Alembic
-    ├── docker-compose.yml           # PostgreSQL для локальной разработки
+    ├── Dockerfile                   # прод-образ бэкенда
     ├── pyproject.toml               # зависимости, ruff, pytest
     ├── requirements.txt             # рантайм-зависимости
     ├── requirements-dev.txt         # зависимости для разработки и тестов
@@ -240,7 +249,11 @@ plusdesign/
 
 ## Что дальше
 
-- Загрузка изображений на диск / CDN
-- Фильтры категории и тега на публичной витрине
-- Админка заявок
+- Фильтры категории и тега на публичной витрине (API уже поддерживает
+  `?category=` и `?tag=` в `GET /api/v1/portfolio`, не хватает UI-переключателей)
+- Уведомление о заявке дублирует запись в БД — если `SMTP_*`/`TELEGRAM_*`
+  не настроены, единственный способ увидеть заявку — раздел «Заявки» в
+  админке (`/admin/leads`)
+- Массовая загрузка изображений (сейчас по одному файлу за раз)
 - TLS (Certbot) снаружи compose, не внутри
+- CI: `pytest`/`ruff`/`tsc`/`oxlint` при пуше, сборка образов

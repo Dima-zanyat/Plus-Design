@@ -9,6 +9,7 @@ import { useRoute } from './hooks/useRoute'
 import { isAdminRoute } from './lib/routing'
 import { AboutPage } from './pages/AboutPage'
 import { AdminItemFormPage } from './pages/AdminItemFormPage'
+import { AdminLeadsPage } from './pages/AdminLeadsPage'
 import { AdminLoginPage } from './pages/AdminLoginPage'
 import { AdminPortfolioPage } from './pages/AdminPortfolioPage'
 import { ContactPage } from './pages/ContactPage'
@@ -36,7 +37,10 @@ export default function App() {
 
   useEffect(() => {
     const needsAuth =
-      route.name === 'admin' || route.name === 'adminNew' || route.name === 'adminEdit'
+      route.name === 'admin' ||
+      route.name === 'adminNew' ||
+      route.name === 'adminEdit' ||
+      route.name === 'adminLeads'
     if (needsAuth && !isAdminAuthenticated()) {
       navigate('/admin/login')
     }
@@ -131,6 +135,9 @@ export default function App() {
           ) : null}
           {authed && route.name === 'adminEdit' ? (
             <AdminItemFormPage itemId={route.id} onNavigate={navigate} />
+          ) : null}
+          {authed && route.name === 'adminLeads' ? (
+            <AdminLeadsPage onNavigate={navigate} />
           ) : null}
         </main>
       </div>

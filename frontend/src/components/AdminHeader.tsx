@@ -26,6 +26,9 @@ export function AdminHeader({ onNavigate }: AdminHeaderProps) {
         <Link to="/admin" className="nav-link" onNavigate={onNavigate}>
           Работы
         </Link>
+        <Link to="/admin/leads" className="nav-link" onNavigate={onNavigate}>
+          Заявки
+        </Link>
         <Link to="/" className="nav-link" onNavigate={onNavigate}>
           На сайт
         </Link>
