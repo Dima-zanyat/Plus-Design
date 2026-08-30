@@ -24,18 +24,28 @@ function formatDate(value: string): string {
   })
 }
 
+function sortLeads(items: Lead[]): Lead[] {
+  return [...items].sort((a, b) => {
+    if (a.status === 'new' && b.status !== 'new') return -1
+    if (a.status !== 'new' && b.status === 'new') return 1
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  })
+}
+
 export function AdminLeadsPage({ onNavigate }: AdminLeadsPageProps) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
 
+  const newCount = leads.filter((lead) => lead.status === 'new').length
+
   useEffect(() => {
     let cancelled = false
     fetchAdminLeads(1, 100)
       .then((page) => {
         if (cancelled) return
-        setLeads(page.items)
+        setLeads(sortLeads(page.items))
         setError(null)
       })
       .catch((err: unknown) => {
@@ -58,7 +68,7 @@ export function AdminLeadsPage({ onNavigate }: AdminLeadsPageProps) {
     setBusyId(lead.id)
     try {
       const updated = await updateLeadStatus(lead.id, status)
-      setLeads((prev) => prev.map((row) => (row.id === lead.id ? updated : row)))
+      setLeads((prev) => sortLeads(prev.map((row) => (row.id === lead.id ? updated : row))))
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         onNavigate('/admin/login')
@@ -75,7 +85,10 @@ export function AdminLeadsPage({ onNavigate }: AdminLeadsPageProps) {
       <div className="block-head admin-head">
         <div>
           <p className="eyebrow">Админка</p>
-          <h1>Заявки</h1>
+          <h1>
+            Заявки
+            {newCount > 0 ? <span className="lead-badge">{newCount} новых</span> : null}
+          </h1>
         </div>
       </div>
       {loading ? <p className="state">Загружаем…</p> : null}
@@ -96,7 +109,7 @@ export function AdminLeadsPage({ onNavigate }: AdminLeadsPageProps) {
             </thead>
             <tbody>
               {leads.map((lead) => (
-                <tr key={lead.id}>
+                <tr key={lead.id} className={lead.status === 'new' ? 'is-new-lead' : undefined}>
                   <td className="muted">{formatDate(lead.created_at)}</td>
                   <td>{lead.name}</td>
                   <td>
@@ -108,6 +121,7 @@ export function AdminLeadsPage({ onNavigate }: AdminLeadsPageProps) {
                   <td className="muted">{lead.message ?? '—'}</td>
                   <td>
                     <select
+                      className={lead.status === 'new' ? 'is-new-lead-select' : undefined}
                       value={lead.status}
                       disabled={busyId === lead.id}
                       onChange={(event) =>
