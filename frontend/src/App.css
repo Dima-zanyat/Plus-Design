@@ -81,6 +81,9 @@
   border-radius: 999px;
   padding: 0.85rem 1.3rem;
   font-weight: 600;
+  cursor: pointer;
+  font: inherit;
+  border: 0;
 }
 
 .header-cta,
@@ -405,6 +408,83 @@ main {
   border: 1px solid var(--line);
 }
 
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gallery img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+}
+
+.admin-login {
+  max-width: 28rem;
+}
+
+.admin-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 252, 247, 0.72);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-table th {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clay);
+  font-weight: 600;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 14px;
+}
+
+.linkish {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--olive);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.check-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-form {
+  max-width: 40rem;
+}
+
 .pagination {
   display: flex;
   align-items: center;
@@ -458,7 +538,8 @@ main {
   .contact,
   .band,
   .process,
-  .portfolio-grid {
+  .portfolio-grid,
+  .gallery {
     grid-template-columns: 1fr;
   }
 

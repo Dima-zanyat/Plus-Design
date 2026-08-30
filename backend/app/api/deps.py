@@ -8,7 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from app.config import Settings, get_settings
 from app.core.exceptions import UnauthorizedError
 from app.core.security import decode_subject
-from app.dependencies import DbSession, AppSettings
+from app.dependencies import DbSession
 from app.repositories.catalog_repo import CategoryRepository, TagRepository
 from app.repositories.lead_repo import LeadRepository
 from app.repositories.portfolio_repo import PortfolioRepository
@@ -28,8 +28,8 @@ def get_portfolio_service(session: DbSession) -> PortfolioService:
     )
 
 
-def get_admin_service(settings: AppSettings) -> AdminService:
-    return AdminService(settings)
+def get_admin_service() -> AdminService:
+    return AdminService()
 
 
 def get_lead_service(session: DbSession) -> LeadService:

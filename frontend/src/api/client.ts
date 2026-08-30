@@ -1,3 +1,5 @@
+import { clearAdminToken, getAdminToken } from './auth'
+
 export class ApiError extends Error {
   status: number
 
@@ -20,18 +22,27 @@ function parseDetail(body: ErrorBody, fallback: string): string {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAdminToken()
   const response = await fetch(path, {
     ...init,
     headers: {
       Accept: 'application/json',
       ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   })
 
+  if (response.status === 204) {
+    return undefined as T
+  }
+
   const body = (await response.json().catch(() => ({}))) as ErrorBody & T
 
   if (!response.ok) {
+    if (response.status === 401 && path !== '/api/v1/admin/login') {
+      clearAdminToken()
+    }
     throw new ApiError(parseDetail(body, 'Не удалось выполнить запрос'), response.status)
   }
 

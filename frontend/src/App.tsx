@@ -1,10 +1,16 @@
 ﻿import { useEffect, useState } from 'react'
+import { isAdminAuthenticated } from './api/auth'
 import { fetchPortfolio, fetchPortfolioItem } from './api/portfolio'
+import { AdminHeader } from './components/AdminHeader'
 import { Footer } from './components/Footer'
 import { Header } from './components/Header'
 import { Link } from './components/Link'
 import { useRoute } from './hooks/useRoute'
+import { isAdminRoute } from './lib/routing'
 import { AboutPage } from './pages/AboutPage'
+import { AdminItemFormPage } from './pages/AdminItemFormPage'
+import { AdminLoginPage } from './pages/AdminLoginPage'
+import { AdminPortfolioPage } from './pages/AdminPortfolioPage'
 import { ContactPage } from './pages/ContactPage'
 import { HomePage } from './pages/HomePage'
 import { PortfolioDetailPage } from './pages/PortfolioDetailPage'
@@ -27,6 +33,14 @@ export default function App() {
   const [detail, setDetail] = useState<PortfolioItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const needsAuth =
+      route.name === 'admin' || route.name === 'adminNew' || route.name === 'adminEdit'
+    if (needsAuth && !isAdminAuthenticated()) {
+      navigate('/admin/login')
+    }
+  }, [route, navigate])
 
   useEffect(() => {
     let cancelled = false
@@ -100,6 +114,28 @@ export default function App() {
       cancelled = true
     }
   }, [detailSlug])
+
+  if (isAdminRoute(route)) {
+    const authed = isAdminAuthenticated()
+    const showLogin = route.name === 'adminLogin' || !authed
+    return (
+      <div className="shell">
+        {!showLogin ? <AdminHeader onNavigate={navigate} /> : null}
+        <main>
+          {showLogin ? <AdminLoginPage onNavigate={navigate} /> : null}
+          {authed && route.name === 'admin' ? (
+            <AdminPortfolioPage onNavigate={navigate} />
+          ) : null}
+          {authed && route.name === 'adminNew' ? (
+            <AdminItemFormPage itemId={null} onNavigate={navigate} />
+          ) : null}
+          {authed && route.name === 'adminEdit' ? (
+            <AdminItemFormPage itemId={route.id} onNavigate={navigate} />
+          ) : null}
+        </main>
+      </div>
+    )
+  }
 
   return (
     <div className="shell">

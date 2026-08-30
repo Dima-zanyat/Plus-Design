@@ -110,3 +110,27 @@ FastAPI, а зависят от `typing.Protocol`, описывающего ну
 
 ### Результат
 Агенты и разработчики читают один смысл продукта в README, AGENTS.md и docs/.
+
+## 2026-08-30 — Админ-API, JWT, прод-Docker
+
+### Контекст
+Публичная витрина и заявки уже работали, но запись в портфолио была открытой,
+`jwt==1.4.0` не совпадал с `jwt.encode`/`decode` (нужен PyJWT), compose был
+dev-сценарием с паролями в файле и healthcheck на несуществующий `/health`.
+
+### Решения
+- Запись портфолио только под Bearer JWT: `POST/PATCH/DELETE /api/v1/admin/portfolio…`.
+  Публичные `GET /portfolio` и `GET /portfolio/{slug}` не ломаем: админский
+  префикс `/admin`, чтобы `{slug}` не перехватывал `admin`.
+- Неверный логин и пароль — один `UnauthorizedError` → HTTP 401.
+- В `production` отключены `/docs` и `/openapi.json`. Медиа отдаются как
+  `StaticFiles`; в работах хранятся URL, без загрузки бинарников.
+- JWT: зависимость **PyJWT**, не пакет `jwt`.
+- Прод: корневой `docker-compose.yml` (`db` + `backend` + `frontend` nginx :80),
+  секреты из `.env`. Локалка: `docker-compose.dev.yml` (Vite + прокси на backend).
+  Healthcheck: `GET /api/v1/health` и `/api/v1/health/db`.
+
+### Результат
+Админка на сайте (`/admin/login`, таблица и форма работ), закрытый write API,
+документация и примеры env обновлены.
+

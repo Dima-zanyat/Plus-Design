@@ -37,7 +37,18 @@ export function PortfolioDetailPage({
       <p className="eyebrow">Проект</p>
       <h1>{item.title}</h1>
       <div className="detail-cover" style={{ background }} />
+      {item.category ? <p className="muted">{item.category.name}</p> : null}
+      {item.tags.length > 0 ? (
+        <p className="muted">{item.tags.map((tag) => tag.name).join(' · ')}</p>
+      ) : null}
       {item.description ? <p className="lead">{item.description}</p> : <p className="lead">Описание ещё не добавлено.</p>}
+      {item.images.length > 0 ? (
+        <div className="gallery">
+          {item.images.map((image) => (
+            <img key={image.id} src={image.url} alt={image.alt || item.title} />
+          ))}
+        </div>
+      ) : null}
       <p className="muted">
         {new Date(item.created_at).toLocaleDateString('ru-RU', {
           year: 'numeric',

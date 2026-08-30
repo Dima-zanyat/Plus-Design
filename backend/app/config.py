@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal, Self
 
-from pydantic import Field, PostgresDsn, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -70,6 +70,13 @@ class Settings(BaseSettings):
     @property
     def database_url_str(self) -> str:
         return str(self.database_url)
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors(cls, value: object) -> object:
+        if isinstance(value, str) and not value.strip().startswith("["):
+            return [part.strip() for part in value.split(",") if part.strip()]
+        return value
 
     @model_validator(mode="after")
     def _require_prod_secrets(self) -> Self:

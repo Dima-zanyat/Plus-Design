@@ -23,20 +23,19 @@ Japandi в этом проекте — **только визуальный ст�
 
 ## Текущее состояние
 
-Реализованы бэкенд первой итерации и публичный фронтенд сайта-визитки:
-витрина портфолио с пагинацией и форма-заявка на проект интерьера.
+Реализованы бэкенд, публичный сайт-визитка и админка портфолио.
 
 | Компонент | Статус |
 | --- | --- |
 | FastAPI-приложение, конфиг, логирование, обработка ошибок | готово |
 | PostgreSQL + SQLAlchemy 2.0 async + Alembic | готово |
-| `GET /api/v1/portfolio` — список с пагинацией | готово |
-| `GET /api/v1/portfolio/{slug}` — одна работа | готово |
-| `POST /api/v1/portfolio` — создание работы | готово, без авторизации |
-| `POST /api/v1/leads` — форма-заявка | готово |
-| Тесты (pytest, 18 шт.) | готово |
-| Фронтенд React + TypeScript (визитка, локальный запуск) | готов |
-| Авторизация и админка | не начаты |
+| `GET /api/v1/portfolio` — опубликованные работы с пагинацией | готово |
+| `GET /api/v1/portfolio/{slug}` — одна опубликованная работа | готово |
+| Админ-CRUD портфолио под JWT (`/api/v1/admin/…`) | готово |
+| `POST /api/v1/leads` — форма-заявка, опционально SMTP/Telegram | готово |
+| Тесты (pytest) | готово |
+| Фронтенд: витрина + `/admin` | готово |
+| Production Docker (`db` + API + nginx :80) | готово |
 
 ## Стек
 
@@ -68,15 +67,43 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Документация API поднимется на http://localhost:8000/docs
+Документация API (не в production): http://localhost:8000/docs
 
-Фронтенд (проксирует `/api` на бэкенд):
+Фронтенд (проксирует `/api` и `/media` на `http://localhost:8000`):
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+
+Админка: http://localhost:5173/admin/login (логин/пароль из `ADMIN_USERNAME` /
+`ADMIN_PASSWORD` в `.env`, по умолчанию в local — `admin` / `admin`).
+
+### Docker
+
+**Разработка** (Vite :5173, API :8000, Postgres :5432):
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+**Production** (nginx :80, API с того же origin через `/api` и `/media`).
+Скопируйте корневой `.env.example` в `.env` и задайте секреты
+(`POSTGRES_PASSWORD`, `DATABASE_URL`, `JWT_SECRET`, `ADMIN_PASSWORD`,
+`CORS_ORIGINS`). В production нельзя оставлять `JWT_SECRET=dev-only-change-me`
+и `ADMIN_PASSWORD=admin`.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Healthcheck бэкенда: `GET /api/v1/health` и `GET /api/v1/health/db`.
+Том `plusdesign-media` монтируется в `/app/media` на бэкенде.
+
+Опциональные уведомления о заявках: `SMTP_*` и/или `TELEGRAM_BOT_TOKEN` +
+`TELEGRAM_CHAT_ID` (см. `.env.example`).
 
 ### Полезные команды
 
@@ -120,12 +147,17 @@ endpoints  →  services  →  repositories  →  models
 plusdesign/
 ├── README.md
 ├── AGENTS.md
+├── docker-compose.yml             # production: db + backend + nginx :80
+├── docker-compose.dev.yml         # локалка: Vite + API + Postgres
+├── .env.example
 ├── docs/
-│   ├── api.md                       # контракт HTTP API
-│   ├── fronted.md                   # стиль и требования к UI
-│   └── decisions.md                 # журнал решений
+│   ├── api.md
+│   ├── fronted.md
+│   └── decisions.md
 │
-├── frontend/                        # React + TypeScript, сайт-визитка
+├── frontend/                      # React + TypeScript
+│   ├── Dockerfile                 # multi-stage → nginx
+│   └── Dockerfile.dev             # npm run dev
 │
 └── backend/
     ├── app/
@@ -138,7 +170,7 @@ plusdesign/
     │   │   ├── __init__.py
     │   │   ├── exceptions.py        # доменные исключения
     │   │   └── logging.py           # настройка логирования
-    │   │   # security.py            # JWT и хэширование — когда появится авторизация
+    │   │   └── security.py          # JWT (PyJWT)
     │   │
     │   ├── db/
     │   │   ├── __init__.py
@@ -170,8 +202,11 @@ plusdesign/
     │   │       └── endpoints/
     │   │           ├── __init__.py
     │   │           ├── health.py    # healthcheck
-    │   │           ├── portfolio.py # витрина портфолио
-    │   │           └── leads.py     # форма-заявка
+    │   │           ├── catalog.py   # категории и теги (чтение)
+    │   │           ├── portfolio.py # публичная витрина
+    │   │           ├── leads.py     # форма-заявка
+    │   │           ├── admin.py     # login / me
+    │   │           └── admin_portfolio.py
     │   │
     │   ├── services/
     │   │   ├── __init__.py
@@ -205,8 +240,7 @@ plusdesign/
 
 ## Что дальше
 
-- Категории и теги работ, фильтрация в списке портфолио
-- Галерея изображений для работы (сейчас одна обложка)
-- Флаги `is_published` и `sort_order` для управления витриной
-- Авторизация и админка, закрытие `POST /api/v1/portfolio`
-- Уведомление о новой заявке (почта или мессенджер)
+- Загрузка изображений на диск / CDN
+- Фильтры категории и тега на публичной витрине
+- Админка заявок
+- TLS (Certbot) снаружи compose, не внутри

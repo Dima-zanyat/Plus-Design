@@ -1,3 +1,16 @@
+export type NamedSlug = {
+  id: number
+  name: string
+  slug: string
+}
+
+export type PortfolioImage = {
+  id: number
+  url: string
+  alt: string
+  sort_order: number
+}
+
 export type PortfolioItem = {
   id: number
   title: string
@@ -5,6 +18,31 @@ export type PortfolioItem = {
   description: string
   cover_image: string | null
   created_at: string
+  is_published: boolean
+  sort_order: number
+  category: NamedSlug | null
+  tags: NamedSlug[]
+  images: PortfolioImage[]
+}
+
+export type PortfolioItemWrite = {
+  title: string
+  slug: string
+  description?: string
+  cover_image?: string | null
+  is_published?: boolean
+  sort_order?: number
+  images?: { url: string; alt?: string; sort_order?: number }[]
+}
+
+export type PortfolioItemUpdate = {
+  title?: string
+  slug?: string
+  description?: string
+  cover_image?: string | null
+  is_published?: boolean
+  sort_order?: number
+  images?: { url: string; alt?: string; sort_order?: number }[]
 }
 
 export type Page<T> = {
@@ -28,4 +66,9 @@ export type Lead = LeadPayload & {
   id: number
   status: 'new' | 'in_progress' | 'done' | 'rejected'
   created_at: string
+}
+
+export type TokenResponse = {
+  access_token: string
+  token_type: string
 }

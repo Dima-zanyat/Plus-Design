@@ -1,17 +1,19 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: plusdesign-db
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: plusdesign
-      POSTGRES_PASSWORD: plusdesign
-      POSTGRES_DB: plusdesign
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-plusdesign}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-plusdesign}
     volumes:
       - plusdesign-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U plusdesign -d plusdesign"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-plusdesign} -d ${POSTGRES_DB:-plusdesign}",
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -20,30 +22,50 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: plusdesign-backend
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://plusdesign:plusdesign@db:5432/plusdesign
-    ports:
-      - "8000:8000"
+      DATABASE_URL: ${DATABASE_URL}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+    volumes:
+      - plusdesign-media:/app/media
     depends_on:
       db:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
-      interval: 5s
-      timeout: 3s
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3); urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/db', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
       retries: 10
+      start_period: 20s
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: plusdesign-frontend
+    restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "80:80"
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
 volumes:
   plusdesign-pgdata:
+  plusdesign-media:
