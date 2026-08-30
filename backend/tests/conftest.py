@@ -2,12 +2,15 @@
 
 import os
 from collections.abc import AsyncIterator
+from pathlib import Path
 
+import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 import app.models  # noqa: F401  # регистрирует модели в Base.metadata
+from app.config import get_settings
 from app.db.base import Base
 from app.dependencies import get_db
 from app.main import create_app
@@ -15,6 +18,16 @@ from app.main import create_app
 # По умолчанию тесты идут на SQLite в памяти, чтобы CI не требовал Postgres.
 # Для проверки на реальном движке задайте TEST_DATABASE_URL с asyncpg.
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+
+
+@pytest.fixture(autouse=True)
+def _isolated_media_root(tmp_path: Path) -> None:
+    """Загрузки в тестах уходят во временную папку, а не в backend/media."""
+    settings = get_settings()
+    original = settings.media_root
+    settings.media_root = tmp_path / "media"
+    yield
+    settings.media_root = original
 
 
 @pytest_asyncio.fixture

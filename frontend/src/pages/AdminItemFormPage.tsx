@@ -1,8 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react'
 import {
   createAdminPortfolioItem,
   fetchAdminPortfolioItem,
   updateAdminPortfolioItem,
+  uploadAdminImage,
 } from '../api/admin'
 import { ApiError } from '../api/client'
 import { Link } from '../components/Link'
@@ -13,6 +14,11 @@ type AdminItemFormPageProps = {
   onNavigate: (path: string) => void
 }
 
+type GalleryImage = {
+  url: string
+  alt: string
+}
+
 type FormState = {
   title: string
   slug: string
@@ -20,7 +26,7 @@ type FormState = {
   cover_image: string
   is_published: boolean
   sort_order: string
-  gallery: string
+  gallery: GalleryImage[]
 }
 
 const emptyForm: FormState = {
@@ -30,7 +36,7 @@ const emptyForm: FormState = {
   cover_image: '',
   is_published: true,
   sort_order: '0',
-  gallery: '',
+  gallery: [],
 }
 
 function toForm(item: PortfolioItem): FormState {
@@ -41,16 +47,8 @@ function toForm(item: PortfolioItem): FormState {
     cover_image: item.cover_image ?? '',
     is_published: item.is_published,
     sort_order: String(item.sort_order),
-    gallery: item.images.map((image) => image.url).join('\n'),
+    gallery: item.images.map((image) => ({ url: image.url, alt: image.alt ?? '' })),
   }
-}
-
-function parseGallery(text: string) {
-  return text
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((url, index) => ({ url, sort_order: index }))
 }
 
 function toPayload(form: FormState): PortfolioItemWrite {
@@ -61,7 +59,11 @@ function toPayload(form: FormState): PortfolioItemWrite {
     cover_image: form.cover_image.trim() || null,
     is_published: form.is_published,
     sort_order: Number(form.sort_order) || 0,
-    images: parseGallery(form.gallery),
+    images: form.gallery.map((image, index) => ({
+      url: image.url,
+      alt: image.alt,
+      sort_order: index,
+    })),
   }
 }
 
@@ -71,6 +73,8 @@ export function AdminItemFormPage({ itemId, onNavigate }: AdminItemFormPageProps
   const [loading, setLoading] = useState(isEdit)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [uploadingCover, setUploadingCover] = useState(false)
+  const [uploadingGallery, setUploadingGallery] = useState(false)
 
   useEffect(() => {
     if (itemId === null) return
@@ -88,6 +92,52 @@ export function AdminItemFormPage({ itemId, onNavigate }: AdminItemFormPageProps
       })
       .finally(() => setLoading(false))
   }, [itemId, onNavigate])
+
+  const handleUploadError = (err: unknown) => {
+    if (err instanceof ApiError && err.status === 401) {
+      onNavigate('/admin/login')
+      return
+    }
+    setError(err instanceof Error ? err.message : 'Не удалось загрузить изображение')
+  }
+
+  const onCoverFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file) return
+    setUploadingCover(true)
+    setError('')
+    try {
+      const { url } = await uploadAdminImage(file)
+      setForm((prev) => ({ ...prev, cover_image: url }))
+    } catch (err) {
+      handleUploadError(err)
+    } finally {
+      setUploadingCover(false)
+    }
+  }
+
+  const onGalleryFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files ? Array.from(event.target.files) : []
+    event.target.value = ''
+    if (files.length === 0) return
+    setUploadingGallery(true)
+    setError('')
+    try {
+      for (const file of files) {
+        const { url } = await uploadAdminImage(file)
+        setForm((prev) => ({ ...prev, gallery: [...prev.gallery, { url, alt: '' }] }))
+      }
+    } catch (err) {
+      handleUploadError(err)
+    } finally {
+      setUploadingGallery(false)
+    }
+  }
+
+  const removeGalleryImage = (index: number) => {
+    setForm((prev) => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== index) }))
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -142,18 +192,38 @@ export function AdminItemFormPage({ itemId, onNavigate }: AdminItemFormPageProps
           <span>Описание</span>
           <textarea
             value={form.description}
-            onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
+            onChange={(event) =>
+              setForm((prev) => ({ ...prev, description: event.target.value }))
+            }
             rows={5}
           />
         </label>
-        <label>
-          <span>Обложка — URL</span>
+
+        <div className="admin-upload-field">
+          <span>Обложка</span>
+          {form.cover_image ? (
+            <div className="admin-cover-preview">
+              <img src={form.cover_image} alt="" />
+              <button
+                type="button"
+                className="linkish"
+                onClick={() => setForm((prev) => ({ ...prev, cover_image: '' }))}
+              >
+                Убрать
+              </button>
+            </div>
+          ) : (
+            <p className="admin-hint">Обложка не выбрана</p>
+          )}
           <input
-            value={form.cover_image}
-            onChange={(event) => setForm((prev) => ({ ...prev, cover_image: event.target.value }))}
-            placeholder="https://…"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            disabled={uploadingCover}
+            onChange={onCoverFileChange}
           />
-        </label>
+          {uploadingCover ? <p className="admin-hint">Загружаем…</p> : null}
+        </div>
+
         <label className="check-row">
           <input
             type="checkbox"
@@ -172,15 +242,37 @@ export function AdminItemFormPage({ itemId, onNavigate }: AdminItemFormPageProps
             onChange={(event) => setForm((prev) => ({ ...prev, sort_order: event.target.value }))}
           />
         </label>
-        <label>
-          <span>Галерея — URL по одному в строке</span>
-          <textarea
-            value={form.gallery}
-            onChange={(event) => setForm((prev) => ({ ...prev, gallery: event.target.value }))}
-            rows={4}
-            placeholder="https://example.com/1.jpg"
+
+        <div className="admin-upload-field">
+          <span>Галерея</span>
+          {form.gallery.length > 0 ? (
+            <ul className="admin-gallery">
+              {form.gallery.map((image, index) => (
+                <li key={`${image.url}-${index}`}>
+                  <img src={image.url} alt={image.alt} />
+                  <button
+                    type="button"
+                    className="linkish"
+                    onClick={() => removeGalleryImage(index)}
+                  >
+                    Удалить
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="admin-hint">Изображений пока нет</p>
+          )}
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            multiple
+            disabled={uploadingGallery}
+            onChange={onGalleryFileChange}
           />
-        </label>
+          {uploadingGallery ? <p className="admin-hint">Загружаем…</p> : null}
+        </div>
+
         <div className="hero-actions">
           <button type="submit" disabled={busy}>
             {busy ? 'Сохраняем…' : 'Сохранить'}

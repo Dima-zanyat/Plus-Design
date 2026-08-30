@@ -4,6 +4,7 @@ import type {
   PortfolioItemUpdate,
   PortfolioItemWrite,
   TokenResponse,
+  UploadedFile,
 } from '../types/api'
 import { apiFetch } from './client'
 
@@ -11,6 +12,15 @@ export function loginAdmin(username: string, password: string) {
   return apiFetch<TokenResponse>('/api/v1/admin/login', {
     method: 'POST',
     body: JSON.stringify({ username, password }),
+  })
+}
+
+export function uploadAdminImage(file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return apiFetch<UploadedFile>('/api/v1/admin/media/upload', {
+    method: 'POST',
+    body: formData,
   })
 }
 

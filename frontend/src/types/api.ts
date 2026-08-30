@@ -45,6 +45,10 @@ export type PortfolioItemUpdate = {
   images?: { url: string; alt?: string; sort_order?: number }[]
 }
 
+export type UploadedFile = {
+  url: string
+}
+
 export type Page<T> = {
   items: T[]
   total: number

@@ -485,6 +485,58 @@ main {
   max-width: 40rem;
 }
 
+.admin-upload-field {
+  display: grid;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.admin-upload-field input[type='file'] {
+  font-weight: 400;
+}
+
+.admin-hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+.admin-cover-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-cover-preview img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.admin-gallery {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.admin-gallery li {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.admin-gallery img {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
 .pagination {
   display: flex;
   align-items: center;

@@ -23,11 +23,12 @@ function parseDetail(body: ErrorBody, fallback: string): string {
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getAdminToken()
+  const isFormData = init?.body instanceof FormData
   const response = await fetch(path, {
     ...init,
     headers: {
       Accept: 'application/json',
-      ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(init?.body && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
